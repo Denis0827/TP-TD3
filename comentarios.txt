@@ -1,0 +1,5 @@
+0 69 Los fragmentos de texto provienen del texto "De finibus bonurum et malorum".
+0 69 Fuentes: https://es.lipsum.com/
+0 2 El Lorem Ipsum es un texto de relleno usado por la industria tipográfica desde aproximadamente el año 1500.
+0 2 "Lorem ipsum" proviene de las palabras "dolorem ipsum" truncadas.
+5 6 "...una de las palabras más oscuras de la lengua del latín..." 
