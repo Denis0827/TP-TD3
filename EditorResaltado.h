@@ -43,7 +43,7 @@ class EditorResaltado {
 		unsigned _longitud_texto;
 		vector<string> _texto;
 		map<const id_comm, string> _comentario;
-		map<const unsigned, set<id_comm>> _comentarios_de_cada_palabra;
+		vector<tuple<const unsigned, set<id_comm>>> _comentarios_de_cada_palabra;
 
 		/*
 		"Hola soy Pepito como estas"
