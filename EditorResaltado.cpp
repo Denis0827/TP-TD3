@@ -38,7 +38,7 @@ const string& EditorResaltado::texto_comentario(id_comm id) const {
 const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 	// TODO: implementar y justificar complejidad
 
-	set<id_comm> ids_comentarios = this->_comentarios_de_cada_palabra.at(pos);
+	set<id_comm> ids_comentarios = get<1>(this->_comentarios_de_cada_palabra[pos]);
 
 }
 
