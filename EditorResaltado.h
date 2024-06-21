@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <tuple>
 
 // Incluya aquí los headers que necesite
 
@@ -11,6 +12,7 @@ using std::string;
 using std::set;
 using std::map;
 using std::vector;
+using std::tuple;
 
 typedef unsigned id_comm;
 	
@@ -22,8 +24,8 @@ class EditorResaltado {
 		static EditorResaltado con_texto(const string& texto);
 
 		// Observadores
-  	unsigned longitud() const;
-  	const string& palabra_en(unsigned pos) const;
+  		unsigned longitud() const;
+  		const string& palabra_en(unsigned pos) const;
 		const string& texto_comentario(id_comm id) const;
 		const set<id_comm> & comentarios_palabra(unsigned pos) const;
 
@@ -44,6 +46,12 @@ class EditorResaltado {
 		vector<string> _texto;
 		map<const id_comm, string> _comentario;
 		vector<set<id_comm>> _comentarios_de_cada_palabra;
+		map<id_comm, int> _cantidad_de_palabras_por_comentario;
+
+
+		void _borrar_palabra_aux(unsigned pos) {
+			
+		}
 
 		/*
 		"Hola soy Pepito como estas"
