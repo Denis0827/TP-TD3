@@ -46,13 +46,8 @@ class EditorResaltado {
 		vector<string> _texto;
 		map<const id_comm, string> _comentario;
 		vector<set<id_comm>> _comentarios_de_cada_palabra;
-		map<id_comm, int> _cantidad_de_palabras_por_comentario;
+		vector<int> _cantidad_de_palabras_por_comentario;
 		unsigned _cantidad_comentario;
-
-
-		void _borrar_palabra_aux(unsigned pos) {
-			
-		}
 
 		/*
 		"Hola soy Pepito como estas"
