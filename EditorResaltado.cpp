@@ -47,6 +47,7 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {
     if (!this->_comentarios_de_cada_palabra[pos].empty()){
         set<id_comm> aux = this->_comentarios_de_cada_palabra[pos];
         this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);
+		_cantidad_de_palabras_por_comentario[pos] = _cantidad_de_palabras_por_comentario[pos] + aux.size();
     } else {
     	this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, set<id_comm>());
     }
@@ -64,16 +65,32 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 	while(it_texto != this->_texto.end() && it_comentario != this->_comentarios_de_cada_palabra.end()) {
 		if(i == pos) {
 			this->_texto.erase(it_texto);
-			if(it_comentario->empty()) {
-				this->_comentarios_de_cada_palabra.erase(it_comentario);
-			} else {
-				this->_borrar_palabra_aux(pos); 
-			}
+			break;
 		}
 		++it_texto; ++it_comentario;
 		i++;
 	}
+
+	auto it_set_comentario = it_comentario->begin();
+
+	while(it_set_comentario != it_comentario->end()) {
+		this->_cantidad_de_palabras_por_comentario[*it_set_comentario]--;
+		++it_set_comentario;
+	}
+
+	auto it_todos_los_comentarios = this->_comentario.begin();
+	auto it_cant_palabras = this->_cantidad_de_palabras_por_comentario.begin();
 	
+	while(it_todos_los_comentarios != this->_comentario.end() && it_cant_palabras != this->_cantidad_de_palabras_por_comentario.end()) {
+		if(*it_cant_palabras == 0) {
+			this->_comentario.erase(it_todos_los_comentarios);
+			this->_cantidad_de_palabras_por_comentario.erase(it_cant_palabras);
+		} else {
+			++it_todos_los_comentarios; 
+			++it_cant_palabras;
+		}
+	}
+
 	this->_longitud_texto--;
 }
 
@@ -94,8 +111,10 @@ id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsig
 		nuevo = ultimo_id_comm + 1;
 		this->_comentario[nuevo] = texto;
 	}
-
-	for (int k = pos_desde; k <= pos_hasta; k++){
+  
+	_cantidad_de_palabras_por_comentario[nuevo] = pos_hasta - pos_desde;
+	
+  for (int k = pos_desde; k <= pos_hasta; k++){
 		this->_comentarios_de_cada_palabra[k].insert(nuevo);
 	}
 }
@@ -106,7 +125,7 @@ void EditorResaltado::resolver_comentario(id_comm id) {
 
 unsigned EditorResaltado::cantidad_comentarios() const {
 	// TODO: implementar y justificar complejidad
-	return 0;
+	return this->_cantidad_comentario;
 }
 
 EditorResaltado EditorResaltado::con_texto(const string& texto) {
@@ -128,4 +147,3 @@ EditorResaltado EditorResaltado::con_texto(const string& texto) {
 
 	return editor;
 }
-
