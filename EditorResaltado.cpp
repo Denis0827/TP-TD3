@@ -11,7 +11,7 @@ using namespace std;
 EditorResaltado::EditorResaltado() {
 	this->_longitud_texto = 0;
 	this->_texto;
-	this->_comentario;
+	this->_comentarios;
 	this->_comentarios_de_cada_palabra;
 }
 
@@ -32,21 +32,21 @@ const string& EditorResaltado::palabra_en(unsigned pos) const {
 
 const string& EditorResaltado::texto_comentario(id_comm id) const {
 	// TODO: implementar y justificar complejidad
-	return this->_comentario.at(id);
+	return get<0>(this->_comentarios.at(id));
 }
 
 const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 	// TODO: implementar y justificar complejidad
 
-	set<id_comm> ids_comentarios = this->_comentarios_de_cada_palabra[pos];
+	set<id_comm> ids_comentarios = get<1>(this->_comentarios_de_cada_palabra[pos]);
 }
 
 void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) { 
     this->_texto.insert(_texto.begin() + pos, palabra);
 
-    if (!this->_comentarios_de_cada_palabra[pos].empty()){
-        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos];
-        this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);
+    if (!get<1>(this->_comentarios_de_cada_palabra[pos]).empty()){
+        set<id_comm> aux = get<1>(this->_comentarios_de_cada_palabra[pos]);
+        get<1>(this->_comentarios_de_cada_palabra[pos]).insert(get<1>(this->_comentarios_de_cada_palabra[pos]).begin() + pos, aux);
 		_cantidad_de_palabras_por_comentario[pos] = _cantidad_de_palabras_por_comentario[pos] + aux.size();
     } else {
     	this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, set<id_comm>());
@@ -59,35 +59,28 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {
 void EditorResaltado::borrar_palabra(unsigned pos) {
 	// TODO: implementar y justificar complejidad
 	auto it_texto = this->_texto.begin();
-	auto it_comentario = this->_comentarios_de_cada_palabra.begin();
-	int i = 0;
+	auto it_comen = this->_comentarios_de_cada_palabra.begin();
 
-	while(it_texto != this->_texto.end() && it_comentario != this->_comentarios_de_cada_palabra.end()) {
-		if(i == pos) {
-			this->_texto.erase(it_texto);
-			break;
-		}
-		++it_texto; ++it_comentario;
-		i++;
+	for(int i = 0; i < pos; i++) {
+		++it_texto; ++it_comen;
+	}
+	this->_texto.erase(it_texto);
+
+	auto it_cada_comen = it_comen->begin();
+	while(it_cada_comen != it_comen->end()) {
+		this->_cantidad_de_palabras_por_comentario[*it_cada_comen]--;
+		++it_cada_comen;
 	}
 
-	auto it_set_comentario = it_comentario->begin();
-
-	while(it_set_comentario != it_comentario->end()) {
-		this->_cantidad_de_palabras_por_comentario[*it_set_comentario]--;
-		++it_set_comentario;
-	}
-
-	auto it_todos_los_comentarios = this->_comentario.begin();
+	auto it_todos_comen = this->_comentarios.begin();
 	auto it_cant_palabras = this->_cantidad_de_palabras_por_comentario.begin();
 	
-	while(it_todos_los_comentarios != this->_comentario.end() && it_cant_palabras != this->_cantidad_de_palabras_por_comentario.end()) {
+	while(it_todos_comen != this->_comentarios.end() && it_cant_palabras != this->_cantidad_de_palabras_por_comentario.end()) {
 		if(*it_cant_palabras == 0) {
-			this->_comentario.erase(it_todos_los_comentarios);
+			this->_comentarios.erase(it_todos_comen);
 			this->_cantidad_de_palabras_por_comentario.erase(it_cant_palabras);
 		} else {
-			++it_todos_los_comentarios; 
-			++it_cant_palabras;
+			++it_todos_comen; ++it_cant_palabras;
 		}
 	}
 
@@ -96,26 +89,12 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 
 id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsigned pos_hasta) {
 	// TODO: implementar y justificar complejidad
-	id_comm nuevo;
-	if (this->_comentario.empty()){
-		id_comm first = 1;
-		this->_comentario[first] = texto;
-	} else{
-		id_comm ultimo_id_comm = 0;
-    	// Iterar a través del map para encontrar el último id_comm
-		for (auto it = this->_comentario.begin(); it != this->_comentario.end(); ++it) {
-			if (it->first > ultimo_id_comm) {
-				ultimo_id_comm = it->first;
-			}
-		}
-		nuevo = ultimo_id_comm + 1;
-		this->_comentario[nuevo] = texto;
-	}
-  
-	_cantidad_de_palabras_por_comentario[nuevo] = pos_hasta - pos_desde;
+	this->_ultimo_id += 1;
+	this->_comentarios[this->_ultimo_id] = texto;
+	this->_cantidad_de_palabras_por_comentario[this->_ultimo_id] = pos_hasta - pos_desde;
 	
-  for (int k = pos_desde; k <= pos_hasta; k++){
-		this->_comentarios_de_cada_palabra[k].insert(nuevo);
+  	for (int k = pos_desde; k <= pos_hasta; k++) {
+		this->_comentarios_de_cada_palabra[k].insert(this->_ultimo_id);
 	}
 }
 
@@ -125,7 +104,7 @@ void EditorResaltado::resolver_comentario(id_comm id) {
 
 unsigned EditorResaltado::cantidad_comentarios() const {
 	// TODO: implementar y justificar complejidad
-	return this->_cantidad_comentario;
+	return this->_cantidad_comentarios;
 }
 
 EditorResaltado EditorResaltado::con_texto(const string& texto) {
