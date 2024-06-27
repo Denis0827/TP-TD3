@@ -13,6 +13,8 @@ EditorResaltado::EditorResaltado() {
 	this->_texto;
 	this->_comentarios;
 	this->_comentarios_de_cada_palabra;
+	this->_cantidad_comentarios = 0;
+	this->_ultimo_id = 0;
 }
 
 unsigned EditorResaltado::longitud() const {
@@ -38,16 +40,21 @@ const string& EditorResaltado::texto_comentario(id_comm id) const {
 const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 	// TODO: implementar y justificar complejidad
 
-	set<id_comm> ids_comentarios = get<1>(this->_comentarios_de_cada_palabra[pos]);
+	set<id_comm> ids_comentarios = this->_comentarios_de_cada_palabra[pos];
 }
 
 void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) { 
     this->_texto.insert(_texto.begin() + pos, palabra);
 
-    if (!get<1>(this->_comentarios_de_cada_palabra[pos]).empty()){
-        set<id_comm> aux = get<1>(this->_comentarios_de_cada_palabra[pos]);
-        get<1>(this->_comentarios_de_cada_palabra[pos]).insert(get<1>(this->_comentarios_de_cada_palabra[pos]).begin() + pos, aux);
-		_cantidad_de_palabras_por_comentario[pos] = _cantidad_de_palabras_por_comentario[pos] + aux.size();
+    if (!this->_comentarios_de_cada_palabra[pos].empty()){
+        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos];
+		auto it = aux.begin();
+		while(it != aux.end()) {
+			string texto = get<0>(this->_comentarios[*it]);
+			unsigned palabras = get<1>(this->_comentarios[*it]);
+			this->_comentarios[*it] = tuple(texto, palabras++); 
+		}
+        this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);
     } else {
     	this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, set<id_comm>());
     }
@@ -58,48 +65,56 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {
 
 void EditorResaltado::borrar_palabra(unsigned pos) {
 	// TODO: implementar y justificar complejidad
-	auto it_texto = this->_texto.begin();
-	auto it_comen = this->_comentarios_de_cada_palabra.begin();
+	this->_texto.erase(this->_texto.begin() + pos);
+	set<id_comm> comentarios = this->_comentarios_de_cada_palabra[pos];
 
-	for(int i = 0; i < pos; i++) {
-		++it_texto; ++it_comen;
-	}
-	this->_texto.erase(it_texto);
-
-	auto it_cada_comen = it_comen->begin();
-	while(it_cada_comen != it_comen->end()) {
-		this->_cantidad_de_palabras_por_comentario[*it_cada_comen]--;
+	auto it_cada_comen = comentarios.begin();
+	while(it_cada_comen != comentarios.end()) {
+		string texto = get<0>(this->_comentarios[*it_cada_comen]);
+		int palabras = get<1>(this->_comentarios[*it_cada_comen]);
+		this->_comentarios[*it_cada_comen] = tuple(texto, palabras--);
 		++it_cada_comen;
 	}
 
-	auto it_todos_comen = this->_comentarios.begin();
-	auto it_cant_palabras = this->_cantidad_de_palabras_por_comentario.begin();
-	
-	while(it_todos_comen != this->_comentarios.end() && it_cant_palabras != this->_cantidad_de_palabras_por_comentario.end()) {
-		if(*it_cant_palabras == 0) {
-			this->_comentarios.erase(it_todos_comen);
-			this->_cantidad_de_palabras_por_comentario.erase(it_cant_palabras);
+	auto it_todos_comens = this->_comentarios.begin();
+	unsigned ultimo_id = 0;
+	while(it_todos_comens != this->_comentarios.end()) {
+		if(get<1>(it_todos_comens->second) == 0) {
+			this->_comentarios.erase(it_todos_comens);
+			this->_cantidad_comentarios--;
 		} else {
-			++it_todos_comen; ++it_cant_palabras;
+			if(ultimo_id < it_todos_comens->first) {
+				ultimo_id = it_todos_comens->first;
+			}
+			++it_todos_comens;
 		}
 	}
 
+	this->_comentarios_de_cada_palabra.erase(this->_comentarios_de_cada_palabra.begin() + pos);
 	this->_longitud_texto--;
 }
 
 id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsigned pos_hasta) {
 	// TODO: implementar y justificar complejidad
 	this->_ultimo_id += 1;
-	this->_comentarios[this->_ultimo_id] = texto;
-	this->_cantidad_de_palabras_por_comentario[this->_ultimo_id] = pos_hasta - pos_desde;
+	this->_comentarios[this->_ultimo_id] = tuple(texto, pos_hasta - pos_desde);
 	
   	for (int k = pos_desde; k <= pos_hasta; k++) {
 		this->_comentarios_de_cada_palabra[k].insert(this->_ultimo_id);
 	}
+
+	this->_cantidad_comentarios++;
 }
 
 void EditorResaltado::resolver_comentario(id_comm id) {
 	// TODO: implementar y justificar complejidad
+	this->_comentarios.erase(id);
+	this->_cantidad_comentarios--;
+
+	unsigned ultimo_id = 0;
+	
+	
+
 }
 
 unsigned EditorResaltado::cantidad_comentarios() const {
