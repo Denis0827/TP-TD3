@@ -20,9 +20,46 @@ unsigned EditorResaltado::longitud() const {
 }
 
 void EditorResaltado::cargar_texto(const string& txt, const string& comments) {
-	// TODO: implementar y justificar complejidad
-}
+    this->_texto.clear();
+    this->_comentarios.clear();
+	this->_cantidad_comentarios = 0;
+	this->_longitud_texto = 0;
+	this->_comentarios_de_cada_palabra;
+    
+    ifstream archivo_txt(txt);
+    ifstream archivo_comments(comments);
 
+    string linea;
+    while (getline(archivo_txt, linea)) {
+        this->_texto.push_back(linea);
+		this->_longitud_texto++;
+		this->_comentarios_de_cada_palabra.push_back(set<id_comm>());
+    }
+
+	int i = 1;
+    while (getline(archivo_comments, linea)) {
+		this->_comentarios[i] = tuple(linea, 0);
+		this->_cantidad_comentarios++;
+		i++;
+
+		int j; string desde; string hasta;
+
+		while(linea[j] != ' ') {
+			desde += linea[j];
+			j++;
+		}
+
+		while(linea[j] != ' ') {
+			hasta += linea[j];
+			j++;
+		}
+
+		comentar(linea, stoi(desde), stoi(hasta));
+    }
+
+    archivo_txt.close();
+    archivo_comments.close();
+}
 
 const string& EditorResaltado::palabra_en(unsigned pos) const {
 	return this->_texto[pos];  // 
@@ -37,15 +74,15 @@ const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 }
 
 void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {  // 
-    this->_texto.insert(_texto.begin() + pos, palabra);  // 
-
-    if (!this->_comentarios_de_cada_palabra[pos].empty()){  // 
-        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos];  // 
+    this->_texto.insert(this->_texto.begin() + pos, palabra);  // 
+	
+    if (pos != 0 && !this->_comentarios_de_cada_palabra[pos - 1].empty()){  // 
+        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos - 1];  // 
 		auto it = aux.begin();  // 
 		while(it != aux.end()) {  // 
 			string texto = get<0>(this->_comentarios[*it]);  // 
 			unsigned palabras = get<1>(this->_comentarios[*it]);  // 
-			this->_comentarios[*it] = tuple(texto, palabras++);  // 
+			this->_comentarios[*it] = tuple(texto, palabras + 1);  // 
 		}
         this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);  // 
     } else {
@@ -56,14 +93,14 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {  /
 }
 
 void EditorResaltado::borrar_palabra(unsigned pos) {
-	this->_texto.erase(this->_texto.begin() + pos);  // 
 	set<id_comm> comentarios = this->_comentarios_de_cada_palabra[pos];  //
+	this->_texto.erase(this->_texto.begin() + pos);  // 
 
 	auto it_cada_comen = comentarios.begin();  // 
 	while(it_cada_comen != comentarios.end()) {  // 
 		string texto = get<0>(this->_comentarios[*it_cada_comen]);  // 
 		int palabras = get<1>(this->_comentarios[*it_cada_comen]);  // 
-		this->_comentarios[*it_cada_comen] = tuple(texto, palabras--);  // 
+		this->_comentarios[*it_cada_comen] = tuple(texto, palabras - 1);  // 
 		++it_cada_comen;  // 
 	}
 
@@ -112,11 +149,14 @@ unsigned EditorResaltado::cantidad_comentarios() const {
 
 EditorResaltado EditorResaltado::con_texto(const string& texto) {
 	EditorResaltado editor = EditorResaltado();
-	int i = 0;
-	int j = 0;
+	int i = 0; int j = 0;
 
 	while(i < texto.size()) {
 		if(texto[i] != ' ') {
+			if(j == 0 && i == 0) {
+				editor._texto.push_back("");
+				editor._comentarios_de_cada_palabra.push_back(set<id_comm>());
+			}
 			editor._texto[j].push_back(texto[i]); // agrego una letra a la palabra
 		} else {
 			editor._texto.push_back(""); // agrego la palabra
@@ -126,5 +166,12 @@ EditorResaltado EditorResaltado::con_texto(const string& texto) {
 		i++;
 	}
 
+	if(!editor._texto.empty()) {
+		editor._longitud_texto++;
+	}
+
+	editor._cantidad_comentarios = 0;
+
 	return editor;
 }
+
