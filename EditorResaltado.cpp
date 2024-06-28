@@ -66,8 +66,7 @@ const string& EditorResaltado::palabra_en(unsigned pos) const {
 }
 
 const string& EditorResaltado::texto_comentario(id_comm id) const {
-	//return get<0>((this->_comentarios[id]));  // 
-	return "No anda nada esto";
+	return get<0>(this->_comentarios.at(id));  // O(1)
 }
 
 const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
@@ -84,6 +83,7 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {  /
 			string texto = get<0>(this->_comentarios[*it]);  // 
 			unsigned palabras = get<1>(this->_comentarios[*it]);  // 
 			this->_comentarios[*it] = tuple(texto, palabras + 1);  // 
+			++it;
 		}
         this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);  // 
     } else {
@@ -94,36 +94,46 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {  /
 }
 
 void EditorResaltado::borrar_palabra(unsigned pos) {
-	set<id_comm> comentarios = this->_comentarios_de_cada_palabra[pos];  // 
-	this->_texto.erase(this->_texto.begin() + pos);  // 
+	set<id_comm> comentarios = this->_comentarios_de_cada_palabra[pos];  // O(1)
+	this->_texto.erase(this->_texto.begin() + pos);  // O(P) porque elimina un valor de un vector
 
-	auto it_cada_comen = comentarios.begin();  // 
-	while(it_cada_comen != comentarios.end()) {  // 
-		string texto = get<0>(this->_comentarios[*it_cada_comen]);  // 
-		int palabras = get<1>(this->_comentarios[*it_cada_comen]);  // 
-		this->_comentarios[*it_cada_comen] = tuple(texto, palabras - 1);  //   
-		++it_cada_comen;  // 
+	auto it_cada_comen = comentarios.begin();  // O(1)
+	while(it_cada_comen != comentarios.end()) {  // O(M) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios de la palabra
+		string texto = get<0>(this->_comentarios[*it_cada_comen]);  // O(log(C)) porque accede al valor de una clave de un map
+		int palabras = get<1>(this->_comentarios[*it_cada_comen]);  // O(log(C))
+		this->_comentarios[*it_cada_comen] = tuple(texto, palabras - 1);  // O(log(C)) porque reasigna el valor de una clave de un map
+		++it_cada_comen;  // O(1)
 	}
 
-	auto it_todos_comens = this->_comentarios.begin();  // 
-	while(it_todos_comens != this->_comentarios.end()) {  // 
-		if(get<1>(it_todos_comens->second) == 0) {  // 
-			this->_comentarios.erase(it_todos_comens);  //
-			this->_cantidad_comentarios--;  // 
+	auto it_todos_comens = this->_comentarios.begin();  // O(1)
+	while(it_todos_comens != this->_comentarios.end()) {  // O(C) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios totales
+		if(get<1>(it_todos_comens->second) == 0) {  // O(1) porque accede al valor de una clave de un map con un iterador
+			it_todos_comens = this->_comentarios.erase(it_todos_comens);  // O(1) amortizado porque elimina un valor de un map con un iterador
+			this->_cantidad_comentarios--;  // O(1)
 		} else {
-			++it_todos_comens;  // 
+			++it_todos_comens;  // O(1)
 		}
 	}
 	
-	this->_comentarios_de_cada_palabra.erase(this->_comentarios_de_cada_palabra.begin() + pos);  // 
-	this->_longitud_texto--;  //
+	this->_comentarios_de_cada_palabra.erase(this->_comentarios_de_cada_palabra.begin() + pos);  // O(M) porque elimina un valor de un vector
+	this->_longitud_texto--;  // O(1)
 }
 
+// Cuenta de complejidad total:
+// O(1) + O(P) + O(1) + O(M) * [O(log(C)) + O(log(C)) + O(log(C)) + O(1)] + O(1) + O(C) * [O(1) + O(1) + O(1) + O(1)] + O(M) + O(1) =
+// O(1) + O(P) + O(1) + O(M) * O(log(C)) + O(1) + O(C) * O(1) + O(M) + O(1) =
+// O(P) + O(M) * O(log(C)) + O(C)
+
 id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsigned pos_hasta) {
-	unsigned ultimo_id = (this->_comentarios.end())->first + 1;  // 
+	unsigned ultimo_id;
+	if(this->_comentarios.empty()) {
+		ultimo_id = 1;
+	} else {
+		ultimo_id = (this->_comentarios.end())->first + 1;  // 
+	}
 	this->_comentarios[ultimo_id] = tuple(texto, pos_hasta - pos_desde);  // 
 	
-  	for (int k = pos_desde; k <= pos_hasta; k++) {  // 
+  	for (int k = pos_desde; k < pos_hasta; k++) {  // 
 		this->_comentarios_de_cada_palabra[k].insert(ultimo_id);  // 
 	}
 
@@ -134,14 +144,16 @@ void EditorResaltado::resolver_comentario(id_comm id) {
 	this->_comentarios.erase(id);  // 
 	this->_cantidad_comentarios--;  // 
 
+	/*
 	int i = 0;  // 
 	while(i < this->_comentarios_de_cada_palabra.size()) {  // 
 		auto it = this->_comentarios_de_cada_palabra[i].find(id);  // 
 		if(it != this->_comentarios_de_cada_palabra[i].end()) {  // 
 			this->_comentarios_de_cada_palabra[i].erase(it);  // 
-		}
-		i++;  // 
+		} 
+		i++;
 	}
+	*/
 }
 
 unsigned EditorResaltado::cantidad_comentarios() const {
@@ -151,13 +163,16 @@ unsigned EditorResaltado::cantidad_comentarios() const {
 EditorResaltado EditorResaltado::con_texto(const string& texto) {
 	EditorResaltado editor = EditorResaltado();
 	int i = 0; int j = 0;
+	editor._texto = vector<string>();
+	editor._comentarios_de_cada_palabra = vector<set<id_comm>>();
+
+	if (!texto.empty()) {
+        editor._texto.push_back("");
+        editor._comentarios_de_cada_palabra.push_back(set<id_comm>());
+    }
 
 	while(i < texto.size()) {
 		if(texto[i] != ' ') {
-			if(j == 0 && i == 0) {
-				editor._texto.push_back("");
-				editor._comentarios_de_cada_palabra.push_back(set<id_comm>());
-			}
 			editor._texto[j].push_back(texto[i]); // agrego una letra a la palabra
 		} else {
 			editor._texto.push_back(""); // agrego la palabra
