@@ -20,8 +20,8 @@ unsigned EditorResaltado::longitud() const {
 }
 
 void EditorResaltado::cargar_texto(const string& txt, const string& comments) {
-    this->_texto.clear();
-    this->_comentarios.clear();
+    this->_texto;
+    this->_comentarios;
 	this->_cantidad_comentarios = 0;
 	this->_longitud_texto = 0;
 	this->_comentarios_de_cada_palabra;
@@ -42,7 +42,7 @@ void EditorResaltado::cargar_texto(const string& txt, const string& comments) {
 		this->_cantidad_comentarios++;
 		i++;
 
-		int j; string desde; string hasta;
+		int j = 0; string desde; string hasta;
 
 		while(linea[j] != ' ') {
 			desde += linea[j];
@@ -70,7 +70,7 @@ const string& EditorResaltado::texto_comentario(id_comm id) const {
 }
 
 const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
-	set<id_comm> ids_comentarios = this->_comentarios_de_cada_palabra[pos];  // O(1)
+	return this->_comentarios_de_cada_palabra[pos];  // O(1)
 }
 
 void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {  // 
@@ -138,13 +138,14 @@ id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsig
 	}
 
 	this->_cantidad_comentarios++;  // 
+
+	return ultimo_id;
 }
 
 void EditorResaltado::resolver_comentario(id_comm id) {
 	this->_comentarios.erase(id);  // 
 	this->_cantidad_comentarios--;  // 
 
-	/*
 	int i = 0;  // 
 	while(i < this->_comentarios_de_cada_palabra.size()) {  // 
 		auto it = this->_comentarios_de_cada_palabra[i].find(id);  // 
@@ -153,7 +154,7 @@ void EditorResaltado::resolver_comentario(id_comm id) {
 		} 
 		i++;
 	}
-	*/
+
 }
 
 unsigned EditorResaltado::cantidad_comentarios() const {
@@ -163,8 +164,6 @@ unsigned EditorResaltado::cantidad_comentarios() const {
 EditorResaltado EditorResaltado::con_texto(const string& texto) {
 	EditorResaltado editor = EditorResaltado();
 	int i = 0; int j = 0;
-	editor._texto = vector<string>();
-	editor._comentarios_de_cada_palabra = vector<set<id_comm>>();
 
 	if (!texto.empty()) {
         editor._texto.push_back("");
@@ -186,8 +185,6 @@ EditorResaltado EditorResaltado::con_texto(const string& texto) {
 	if(!editor._texto.empty()) {
 		editor._longitud_texto++;
 	}
-
-	editor._cantidad_comentarios = 0;
 
 	return editor;
 }
