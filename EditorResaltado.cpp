@@ -30,31 +30,31 @@ void EditorResaltado::cargar_texto(const string& txt, const string& comments) {
     ifstream archivo_comments(comments);
 
     string linea;
-    while (getline(archivo_txt, linea)) {
+    while (getline(archivo_txt, linea, ' ')) {
         this->_texto.push_back(linea);
 		this->_longitud_texto++;
 		this->_comentarios_de_cada_palabra.push_back(set<id_comm>());
-    }
-
-	int i = 1;
+  	}
+        
     while (getline(archivo_comments, linea)) {
-		this->_comentarios[i] = tuple(linea, 0);
-		this->_cantidad_comentarios++;
-		i++;
-
-		int j = 0; string desde; string hasta;
+		int j = 0; string desde; string hasta; string comentario;
 
 		while(linea[j] != ' ') {
 			desde += linea[j];
 			j++;
-		}
+		} j++;
 
 		while(linea[j] != ' ') {
 			hasta += linea[j];
 			j++;
+		} j++;
+
+		while(j < linea.size()) {
+			comentario += linea[j];
+			j++;
 		}
 
-		comentar(linea, stoi(desde), stoi(hasta));
+		comentar(comentario, stoi(desde), stoi(hasta));
     }
 
     archivo_txt.close();
@@ -66,32 +66,37 @@ const string& EditorResaltado::palabra_en(unsigned pos) const {
 }
 
 const string& EditorResaltado::texto_comentario(id_comm id) const {
-	return get<0>(this->_comentarios.at(id));  // O(1)
+	return get<0>(this->_comentarios.at(id));  // O(log(C)) porque se accede al valor de una clave de un map
 }
 
 const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 	return this->_comentarios_de_cada_palabra[pos];  // O(1)
 }
 
-void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {  // 
-    this->_texto.insert(this->_texto.begin() + pos, palabra);  // 
+void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) { 
+    this->_texto.insert(this->_texto.begin() + pos, palabra);  // O(P) porque se inserta un valor en un vector
 	
-    if (pos != 0 && !this->_comentarios_de_cada_palabra[pos - 1].empty()){  // 
-        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos - 1];  // 
-		auto it = aux.begin();  // 
-		while(it != aux.end()) {  // 
-			string texto = get<0>(this->_comentarios[*it]);  // 
-			unsigned palabras = get<1>(this->_comentarios[*it]);  // 
-			this->_comentarios[*it] = tuple(texto, palabras + 1);  // 
-			++it;
+    if (pos != 0 && !this->_comentarios_de_cada_palabra[pos - 1].empty()){  // O(1)
+        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos - 1];  // O(1) porque se asigna a la variable un valor específico del vector
+		auto it = aux.begin();  // O(1)
+		while(it != aux.end()) {  // O(M) porque el número de iteraciones del ciclo está determinado por la cantidad de comentarios de una palabra
+			string texto = get<0>(this->_comentarios[*it]);  // O(log(C)) porque se accede al valor de una clave de un map
+			unsigned palabras = get<1>(this->_comentarios[*it]);  // O(log(C)) 
+			this->_comentarios[*it] = tuple(texto, palabras + 1);  // O(log(C)) porque se reasigna el valor de una clave de un map
+			++it; // O(1)
 		}
-        this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);  // 
+        this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);  // O(M) porque se inserta un valor en un vector
     } else {
-    	this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, set<id_comm>());  // 
+    	this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, set<id_comm>());  // O(M) porque se inserta un valor en un vector
     }
     
-    this->_longitud_texto++;  // 
+    this->_longitud_texto++;  // O(1)
 }
+
+// Cuenta de complejidad total:
+// O(P) + O(1) + O(1) + O(1) + O(M) * [O(log(C)) + O(log(C)) + O(log(C)) + O(1)] + O(M) + O(M) + O(1) =
+// O(P) + O(1) + O(1) + O(1) + O(M) * O(log(C)) + O(M) + O(M) + O(1) =
+// O(P) + O(M) * O(log(C)) = O(P + M*log(C))
 
 void EditorResaltado::borrar_palabra(unsigned pos) {
 	set<id_comm> comentarios = this->_comentarios_de_cada_palabra[pos];  // O(1)
@@ -99,9 +104,9 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 
 	auto it_cada_comen = comentarios.begin();  // O(1)
 	while(it_cada_comen != comentarios.end()) {  // O(M) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios de la palabra
-		string texto = get<0>(this->_comentarios[*it_cada_comen]);  // O(log(C)) porque accede al valor de una clave de un map
+		string texto = get<0>(this->_comentarios[*it_cada_comen]);  // O(log(C)) porque se accede al valor de una clave de un map
 		int palabras = get<1>(this->_comentarios[*it_cada_comen]);  // O(log(C))
-		this->_comentarios[*it_cada_comen] = tuple(texto, palabras - 1);  // O(log(C)) porque reasigna el valor de una clave de un map
+		this->_comentarios[*it_cada_comen] = tuple(texto, palabras - 1);  // O(log(C)) porque se reasigna el valor de una clave de un map
 		++it_cada_comen;  // O(1)
 	}
 
@@ -122,7 +127,7 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 // Cuenta de complejidad total:
 // O(1) + O(P) + O(1) + O(M) * [O(log(C)) + O(log(C)) + O(log(C)) + O(1)] + O(1) + O(C) * [O(1) + O(1) + O(1) + O(1)] + O(M) + O(1) =
 // O(1) + O(P) + O(1) + O(M) * O(log(C)) + O(1) + O(C) * O(1) + O(M) + O(1) =
-// O(P) + O(M) * O(log(C)) + O(C)
+// O(P) + O(M) * O(log(C)) + O(C) = O(P + M*log(C) + C)
 
 id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsigned pos_hasta) {
 	unsigned ultimo_id;
@@ -143,18 +148,17 @@ id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsig
 }
 
 void EditorResaltado::resolver_comentario(id_comm id) {
-	this->_comentarios.erase(id);  // 
-	this->_cantidad_comentarios--;  // 
-
-	int i = 0;  // 
-	while(i < this->_comentarios_de_cada_palabra.size()) {  // 
-		auto it = this->_comentarios_de_cada_palabra[i].find(id);  // 
-		if(it != this->_comentarios_de_cada_palabra[i].end()) {  // 
-			this->_comentarios_de_cada_palabra[i].erase(it);  // 
+	this->_comentarios.erase(id);  // O(1) amortizado porque se elimina el elemento de una posición de un map
+	this->_cantidad_comentarios--;  // O(1)
+	
+	int i = 0;  // O(1)
+	while(i < this->_comentarios_de_cada_palabra.size()) {  // O(C) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios totales
+		auto it = this->_comentarios_de_cada_palabra[i].find(id);  // O(log(C)) 
+		if(it != this->_comentarios_de_cada_palabra[i].end()) {  // O(1) 
+			this->_comentarios_de_cada_palabra[i].erase(it);  // O(1) amortizado
 		} 
-		i++;
+		i++; // O(1) 
 	}
-
 }
 
 unsigned EditorResaltado::cantidad_comentarios() const {
