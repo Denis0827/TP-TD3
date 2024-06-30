@@ -44,9 +44,34 @@ class EditorResaltado {
 		// representación de la misma.
 		unsigned _longitud_texto;
 		vector<string> _texto;
-		map<const id_comm, tuple<string, unsigned>> _comentarios; 
+		map<id_comm, tuple<string, pair<unsigned, unsigned>>> _comentarios; 
 		vector<set<id_comm>> _comentarios_de_cada_palabra;
 		unsigned _cantidad_comentarios;
-		unsigned _ultimo_id;
+
+		// Rep(e:estr) ≡
+
+		// Los elementos de _texto no tienen espacios.
+		// (forall i:int) 0 <= i < |e._texto| ⇒ ((forall j:int) 0 <= j < |e._texto[i]| ⇒ e._texto[i][j] != ' ') &&
+
+		// El valor de _cantidad_comentarios equivale a la cantidad de claves en _comentarios.
+		// e._cantidad_comentarios = #(claves(e._comentarios)) &&
+
+		// El valor de _longitud_texto equivale a la cantidad de elementos en _texto y _comentarios_de_cada_palabra.
+		// |e._texto| = |e._comentarios_de_cada_palabra| = e._longitud_texto &&
+
+		// Los id_comm que están en los sets de _comentarios_de_cada_palabra están también en _comentarios (ida y vuelta).
+		// (forall id:id_comm) id ∈ claves(e._comentarios) ⇒ ((exists i:int) 0 <= i < |e._comentarios_de_cada_palabra| && id ∈ e._comentarios_de_cada_palabra[i]) &&
+		// (forall i:int) 0 <= i < |e._comentarios_de_cada_palabra| ⇒ ((forall id:id_comm) id ∈ e._comentarios_de_cada_palabra[i] ⇒ id ∈ claves(e._comentarios)) &&		
+		
+		// Los id_comm almacenados en los sets de _comentarios_de_cada_palabra solamente puede repetirse en los sets vecinos.
+		// (forall i:int) 0 <= i <= |_comentarios_de_cada_palabra| ⇒  (forall j:int) 0 <= j <= |_comentarios_de_cada_palabra[j]| ⇒
+		// ⇒ [(exists k:int) 0 <= k <= |_comentarios_de_cada_palabra[i-1]| || (exists n:int) 0 <= n <= |_comentarios_de_cada_palabra[i+1]|] &&
+		// && _comentarios_de_cada_palabra[i][j] = comentarios_de_cada_palabra[i-1][k] || _comentarios_de_cada_palabra[i][j] = comentarios_de_cada_palabra[i+1][n]
+
+		// Los segundos valores de las tuplas de cada id_comm de _comentarios equivale a la cantidad de elementos de _comentarios_de_cada_palabra que tienen incluido en su set dicha id_comm.
+		// (foarll id:id_comm) id ∈ claves(e._comentarios) ⇒ e._comentarios[id].second = 
+
+		// sum
+
 
 };
