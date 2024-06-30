@@ -76,13 +76,13 @@ const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) { 
     this->_texto.insert(this->_texto.begin() + pos, palabra);  // O(P) porque se inserta un valor en un vector
 	
-    if (pos != 0 && !this->_comentarios_de_cada_palabra[pos - 1].empty()){  // O(1)
-        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos - 1];  // O(1) porque se asigna a la variable un valor específico del vector
+    if (pos != this->_longitud_texto && !this->_comentarios_de_cada_palabra[pos + 1].empty()){  // O(1)
+        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos + 1];  // O(1) porque se asigna a la variable un valor específico del vector
 		auto it = aux.begin();  // O(1)
 		while(it != aux.end()) {  // O(M) porque el número de iteraciones del ciclo está determinado por la cantidad de comentarios de una palabra
 			string texto = get<0>(this->_comentarios[*it]);  // O(log(C)) porque se accede al valor de una clave de un map
-			unsigned palabras = get<1>(this->_comentarios[*it]);  // O(log(C)) 
-			this->_comentarios[*it] = tuple(texto, palabras + 1);  // O(log(C)) porque se reasigna el valor de una clave de un map
+			pair<unsigned, unsigned> palabras = pair(get<1>(this->_comentarios[*it]).first, get<1>(this->_comentarios[*it]).second + 1);  // O(log(C)) 
+			this->_comentarios[*it] = tuple(texto, palabras);  // O(log(C)) porque se reasigna el valor de una clave de un map
 			++it; // O(1)
 		}
         this->_comentarios_de_cada_palabra.insert(this->_comentarios_de_cada_palabra.begin() + pos, aux);  // O(M) porque se inserta un valor en un vector
@@ -96,7 +96,7 @@ void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) {
 // Cuenta de complejidad total:
 // O(P) + O(1) + O(1) + O(1) + O(M) * [O(log(C)) + O(log(C)) + O(log(C)) + O(1)] + O(M) + O(M) + O(1) =
 // O(P) + O(1) + O(1) + O(1) + O(M) * O(log(C)) + O(M) + O(M) + O(1) =
-// O(P) + O(M) * O(log(C)) = O(P + M*log(C))
+// O(P) + O(M) * O(log(C)) = O(P + M * log(C))
 
 void EditorResaltado::borrar_palabra(unsigned pos) {
 	set<id_comm> comentarios = this->_comentarios_de_cada_palabra[pos];  // O(1)
@@ -105,8 +105,8 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 	auto it_cada_comen = comentarios.begin();  // O(1)
 	while(it_cada_comen != comentarios.end()) {  // O(M) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios de la palabra
 		string texto = get<0>(this->_comentarios[*it_cada_comen]);  // O(log(C)) porque se accede al valor de una clave de un map
-		int palabras = get<1>(this->_comentarios[*it_cada_comen]);  // O(log(C))
-		this->_comentarios[*it_cada_comen] = tuple(texto, palabras - 1);  // O(log(C)) porque se reasigna el valor de una clave de un map
+		pair<unsigned, unsigned> palabras = pair(get<1>(this->_comentarios[*it_cada_comen]).first, get<1>(this->_comentarios[*it_cada_comen]).second - 1);  // O(log(C))
+		this->_comentarios[*it_cada_comen] = tuple(texto, palabras);  // O(log(C)) porque se reasigna el valor de una clave de un map
 		++it_cada_comen;  // O(1)
 	}
 
@@ -127,39 +127,50 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 // Cuenta de complejidad total:
 // O(1) + O(P) + O(1) + O(M) * [O(log(C)) + O(log(C)) + O(log(C)) + O(1)] + O(1) + O(C) * [O(1) + O(1) + O(1) + O(1)] + O(M) + O(1) =
 // O(1) + O(P) + O(1) + O(M) * O(log(C)) + O(1) + O(C) * O(1) + O(M) + O(1) =
-// O(P) + O(M) * O(log(C)) + O(C) = O(P + M*log(C) + C)
+// O(P) + O(M) * O(log(C)) + O(C) = O(P + M * log(C) + C)
 
 id_comm EditorResaltado::comentar(const string& texto, unsigned pos_desde, unsigned pos_hasta) {
-	unsigned ultimo_id;
-	if(this->_comentarios.empty()) {
-		ultimo_id = 1;
+	unsigned ultimo_id;  //O(1)
+	if(this->_comentarios.empty()) {  //O(1) 
+		ultimo_id = 1;  //O(1)
 	} else {
-		ultimo_id = (this->_comentarios.end())->first + 1;  // 
+		ultimo_id = (this->_comentarios.end())->first + 1;  // O(1)
 	}
-	this->_comentarios[ultimo_id] = tuple(texto, pos_hasta - pos_desde);  // 
+	this->_comentarios[ultimo_id] = tuple(texto, pair(pos_desde, pos_desde));  // O(log(C)) porque se asigna un valor a una clave del map
 	
-  	for (int k = pos_desde; k < pos_hasta; k++) {  // 
-		this->_comentarios_de_cada_palabra[k].insert(ultimo_id);  // 
+  	for (int k = pos_desde; k < pos_hasta; k++) {  // O(Ri) porque la cantidad de veces que recorre el ciclo depende de la cantidad de palabras que tiene el comentario 
+		this->_comentarios_de_cada_palabra[k].insert(ultimo_id);  // O(log(M)) porque se inserta un valor al conjunto de comentarios que tiene una palabra
 	}
 
-	this->_cantidad_comentarios++;  // 
+	this->_cantidad_comentarios++;  // O(1)
 
-	return ultimo_id;
+	return ultimo_id;  // O(1)
 }
 
+// Cuenta de complejidad total:
+// O(1) + O(1) + O(1) + O(1) + O(log(C)) + O(Ri) * O(log(M)) + O(1) + O(1) =
+// O(log(C)) + O(Ri) * O(log(M)) = O(log(C) + Ri * log(M))
+
 void EditorResaltado::resolver_comentario(id_comm id) {
-	this->_comentarios.erase(id);  // O(1) amortizado porque se elimina el elemento de una posición de un map
+	this->_comentarios.erase(id);  // O(log(C)) porque se elimina una clave del map
 	this->_cantidad_comentarios--;  // O(1)
 	
-	int i = 0;  // O(1)
-	while(i < this->_comentarios_de_cada_palabra.size()) {  // O(C) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios totales
-		auto it = this->_comentarios_de_cada_palabra[i].find(id);  // O(log(C)) 
+	unsigned i = get<1>(this->_comentarios[id]).first;  // O(log(C)) porque se accede al valor de una clave de un map
+	unsigned pos_hasta = get<1>(this->_comentarios[id]).second;  // O(log(C)) porque se accede al valor de una clave de un map
+
+	while(i < pos_hasta) {  // O(Ri) porque la cantidad de veces que recorre el ciclo depende de la cantidad de palabras que tiene el comentario 
+		auto it = this->_comentarios_de_cada_palabra[i].find(id);  // O(log(M)) porque el método se aplica sobre un vector cuya longitud depende de la cantidad de comentarios de una palabra
 		if(it != this->_comentarios_de_cada_palabra[i].end()) {  // O(1) 
 			this->_comentarios_de_cada_palabra[i].erase(it);  // O(1) amortizado
 		} 
 		i++; // O(1) 
 	}
 }
+
+// Cuenta de complejidad total:
+// O(log(C)) + O(1) + O(log(C)) + O(log(C)) + O(Ri) * [O(log(M)) + O(1) + O(1)] =
+// O(log(C)) + O(1) + O(log(C)) + O(log(C)) + O(Ri) * O(log(M)) =
+// O(log(C)) + O(Ri) * O(log(M)) = O(log(C) + Ri * log(M))
 
 unsigned EditorResaltado::cantidad_comentarios() const {
 	return this->_cantidad_comentarios;  // O(1)
@@ -176,9 +187,9 @@ EditorResaltado EditorResaltado::con_texto(const string& texto) {
 
 	while(i < texto.size()) {
 		if(texto[i] != ' ') {
-			editor._texto[j].push_back(texto[i]); // agrego una letra a la palabra
+			editor._texto[j].push_back(texto[i]); 
 		} else {
-			editor._texto.push_back(""); // agrego la palabra
+			editor._texto.push_back(""); 
 			editor._longitud_texto++;
 			editor._comentarios_de_cada_palabra.push_back(set<id_comm>());
 			j++;
