@@ -76,8 +76,8 @@ const set<id_comm>& EditorResaltado::comentarios_palabra(unsigned pos) const {
 void EditorResaltado::insertar_palabra(const string& palabra, unsigned pos) { 
     this->_texto.insert(this->_texto.begin() + pos, palabra);  // O(P) porque se inserta un valor en un vector
 	
-    if (pos != this->_longitud_texto && !this->_comentarios_de_cada_palabra[pos + 1].empty()){  // O(1)
-        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos + 1];  // O(1) porque se asigna a la variable un valor específico del vector
+    if (pos != this->_longitud_texto && !this->_comentarios_de_cada_palabra[pos].empty()){  // O(1)
+        set<id_comm> aux = this->_comentarios_de_cada_palabra[pos];  // O(1) porque se asigna a la variable un valor específico del vector
 		auto it = aux.begin();  // O(1)
 		while(it != aux.end()) {  // O(M) porque el número de iteraciones del ciclo está determinado por la cantidad de comentarios de una palabra
 			string texto = get<0>(this->_comentarios[*it]);  // O(log(C)) porque se accede al valor de una clave de un map
@@ -112,7 +112,7 @@ void EditorResaltado::borrar_palabra(unsigned pos) {
 
 	auto it_todos_comens = this->_comentarios.begin();  // O(1)
 	while(it_todos_comens != this->_comentarios.end()) {  // O(C) porque la cantidad de veces que se recorre el ciclo depende de la cantidad de comentarios totales
-		if(get<1>(it_todos_comens->second) == 0) {  // O(1) porque accede al valor de una clave de un map con un iterador
+		if(get<1>(it_todos_comens->second).second - get<1>(it_todos_comens->second).first == 0) {  // O(1) porque accede al valor de una clave de un map con un iterador
 			it_todos_comens = this->_comentarios.erase(it_todos_comens);  // O(1) amortizado porque elimina un valor de un map con un iterador
 			this->_cantidad_comentarios--;  // O(1)
 		} else {
